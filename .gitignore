@@ -5,7 +5,8 @@
 .log/
 logs/
 audoencoder/
-*lr=*
+lr=*
+events.out.tfevents*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
