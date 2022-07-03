@@ -4,6 +4,7 @@
 *.log
 .log/
 logs/
+audoencoder/
 
 
 # Byte-compiled / optimized / DLL files
