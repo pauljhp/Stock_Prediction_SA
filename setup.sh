@@ -3,7 +3,7 @@
 conda create -f ./environment.yml
 
 # --or--
-# !conda create --name sent_env --file requirements.
+# !conda create --name sent_env --file requirements.txt
 conda activate sent_env
 
 !mkdir -p ./data
