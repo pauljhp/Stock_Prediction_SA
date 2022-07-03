@@ -5,7 +5,7 @@
 .log/
 logs/
 audoencoder/
-
+*lr=*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
