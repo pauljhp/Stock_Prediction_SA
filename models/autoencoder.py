@@ -24,7 +24,8 @@ DEFAULT_CONFIG = Config(input_dims=(88, 100), hidden_dims=(5, ),
 class AutoEncoder(nn.Module):
     def __init__(self, config=DEFAULT_CONFIG, 
         input_dims: Optional[Tuple[int]]=(88, 100),
-        hidden_dims: Optional[Tuple[int]]=(5, ),):
+        hidden_dims: Optional[Tuple[int]]=(5, ),
+        lstm_hidden: int=10):
         super(AutoEncoder, self).__init__()
         self.config = config
         if config.get('input_dims', 'object'): 
@@ -42,7 +43,7 @@ class AutoEncoder(nn.Module):
         else: dtype = torch.float64
         self.dtype = dtype
 
-        self.LSTM_encoder = nn.LSTM(input_dims[-1], 10, batch_first=False, dtype=self.dtype)
+        self.LSTM_encoder = nn.LSTM(input_dims[-1], lstm_hidden, batch_first=False, dtype=self.dtype)
         self.Conv1D_encoder = nn.Conv1d(input_dims[0], input_dims[0], stride=1,
             padding=0, kernel_size=3, dtype=self.dtype)
         self.MaxPool1D_encoder = nn.MaxPool1d(kernel_size=2, stride=2, padding=0,
@@ -52,9 +53,9 @@ class AutoEncoder(nn.Module):
         self.Dense_decoder = nn.Linear(in_features=hidden_dims[0], 
             out_features=352, dtype=self.dtype)
         self.MaxUnpool1D_decoder = nn.MaxUnpool1d(kernel_size=2, stride=2, padding=0)
-        self.DeConv1D_decoder = nn.ConvTranspose2d(input_dims[0], input_dims[0], stride=1,
+        self.DeConv1D_decoder = nn.ConvTranspose1d(input_dims[0], input_dims[0], stride=1,
             padding=0, kernel_size=3, dtype=self.dtype)
-        self.LSTM_decoder = nn.LSTM(input_dims[-1], 100, batch_first=False, dtype=self.dtype)
+        self.LSTM_decoder = nn.LSTM(lstm_hidden, 100, batch_first=False, dtype=self.dtype)
     
     def forward(self, x: torch.tensor) -> Tuple[torch.tensor, torch.tensor]:
         x = padding(x, direction='left', pad_value=0., repeat=self.input_dims[1] - x.shape[1])
@@ -67,9 +68,11 @@ class AutoEncoder(nn.Module):
         x_ = self.Dense_decoder.forward(z)
         x_ = x_.reshape((self.input_dims[0], -1))
         x_ = self.MaxUnpool1D_decoder.forward(x_, indices=ind)
-        x_ = self.Conv1D_decoder.forward(x)
-        x_ = self.DeConv1D_decoder.forward(x)
+        x_ = self.DeConv1D_decoder.forward(x_)
         inv_idx = torch.arange(x_.size(1)-1, -1, -1).long()
-        inv_h_f = x.index_select(1, inv_idx)
+        inv_h_f = x_.index_select(1, inv_idx)
         x_, _ = self.LSTM_decoder.forward(inv_h_f)
-        return x
+        return x_, z
+
+    def __call__(self, x):
+        return self.forward(x)
