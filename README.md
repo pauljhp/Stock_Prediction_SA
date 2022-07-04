@@ -1,4 +1,4 @@
-# Deep learning with LSTM and Conv layers for stock price prediction, using news sentment data
+# Deep learning with LSTM and Conv layers for stock price prediction, using news sentiment data
 
 ## 1. Loading data
 
