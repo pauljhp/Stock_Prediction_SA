@@ -8,6 +8,7 @@ dependencies:
   - pandas
   - numpy
   - ipykernel
+  - pip
   - pip:
     - gdown
 prefix: /home/anaconda3/envs/sent_env
