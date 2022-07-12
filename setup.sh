@@ -7,7 +7,7 @@ if [[ "$OSTYPE" == "msys" ]]; then
 elif [[ "$OSTYPE" == "linux-gnu" ]]; then
     echo "linux OS deteced"
     conda env create -f ./environment.yml
-    source activate sent_env
+    conda activate sent_env
 fi
 
 # --or--
