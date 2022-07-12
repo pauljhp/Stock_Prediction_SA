@@ -99,6 +99,7 @@ class BaseDataset(Dataset):
             fill_value: Optional[float]=-1.,
             fill_na: Optional[bool]=True,
             mode: Optional[str]='train',
+            feature_range: Tuple[float] = (-1., 1.),
             num_workers: int=0,
             ):
         """
@@ -137,6 +138,7 @@ class BaseDataset(Dataset):
         if config.get('look_back', 'object'): look_back = config.look_back
         if config.get('look_forward', 'object'): look_forward = config.look_forward
         if config.get('data_path'): data_path = config.data_path
+        if config.get('feature_range'): feature_range = config.feature_range
 
         self.sql_conn_sent = sqlite3.connect(
             os.path.join(data_path, 'spx_news_sentiment_price.db'))
@@ -153,8 +155,8 @@ class BaseDataset(Dataset):
         WHERE type ='table' AND name NOT LIKE 'sqlite_%';""", 
         self.sql_conn_funda)['name'].to_list()
         self.tickers = [i for i in news_tickers if i in funda_tickers] # in case both databases don't contain the same tickers, which shouldn't happen
-        self.sent_scaler, self.funda_scaler = (MinMaxScaler(feature_range=(-1, 1)), 
-            MinMaxScaler(feature_range=(-1, 1)))
+        self.sent_scaler, self.funda_scaler = (MinMaxScaler(feature_range=feature_range), 
+            MinMaxScaler(feature_range=feature_range))
         self.sent_scaler.fit(pd.concat([pd.read_sql(
             f"select * from `{ticker}`", self.sql_conn_sent
                 ).set_index(["level_0", "level_1"]).T
@@ -177,7 +179,7 @@ class BaseDataset(Dataset):
                     ):
                     self.data.append(data)
         else:
-            with ThreadPoolExecutor() as executor:
+            with ThreadPoolExecutor(max_workers=num_workers) as executor:
                 for chunk in iter_by_chunk(self.ticker):
                     futures = [executor.submit(self.load_ticker_data, 
                         ticker=ticker, look_back=look_back, 
