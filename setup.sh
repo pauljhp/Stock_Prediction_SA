@@ -4,6 +4,7 @@ if [[ "$OSTYPE" == "msys"]]; then
     conda env create -f ./environment_win.yml
 elif [[ "$OSTYPE" == "linux-gnu"]]; then
     conda env create -f ./environment.yml
+fi
 
 # --or--
 # conda create --name sent_env --file requirements.txt
