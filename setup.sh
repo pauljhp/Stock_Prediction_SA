@@ -1,8 +1,10 @@
 #!/bin/bash
 # setup environment
-if [[ "$OSTYPE" == "msys"]]; then
+if [[ "$OSTYPE" == "msys" ]]; then
+    echo "windows OS detected"
     conda env create -f ./environment_win.yml
-elif [[ "$OSTYPE" == "linux-gnu"]]; then
+elif [[ "$OSTYPE" == "linux-gnu" ]]; then
+    echo "linux OS deteced"
     conda env create -f ./environment.yml
 fi
 
