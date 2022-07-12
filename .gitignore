@@ -4,9 +4,11 @@
 *.log
 .log/
 logs/
-audoencoder/
-lr=*
-events.out.tfevents*
+
+# checkpoints
+*.pth 
+*.pt
+runs/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

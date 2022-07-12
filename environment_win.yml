@@ -8,4 +8,4 @@ dependencies:
   - pandas
   - numpy
   - ipykernel
-prefix: /home/anaconda3/envs/sent_env
+prefix: C:\users\p.peng\anaconda3\envs\sent_env

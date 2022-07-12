@@ -12,7 +12,7 @@ import logging
 
 
 CWD = os.getcwd()
-if CWD.split(r"/")[-1] == 'Stock_Prediction_SA':
+if CWD.split(r"/")[-1].split("\\")[-1] == 'Stock_Prediction_SA':
     from utils import iter_by_chunk, Config
 else:
     from ..utils import iter_by_chunk, Config

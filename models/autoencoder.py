@@ -11,7 +11,7 @@ from typing import Tuple, Dict, Optional, Union
 
 
 CWD = os.getcwd()
-if CWD.split(r"/")[-1] == 'Stock_Prediction_SA':
+if CWD.split(r"/")[-1].split("\\")[-1] == 'Stock_Prediction_SA':
     from utils import Config, padding
 else:
     from ..utils import Config, padding
@@ -37,7 +37,7 @@ class AutoEncoder(nn.Module):
             hidden_dims = config.hidden_dims
             self.hidden_dims = hidden_dims
         if config.get('activation', 'object'): activation = config.activation
-        else: activation = torch.tanh
+        else: activation = nn.Tanh
         self.activation = activation
 
         if config.get('dtype', 'object'): dtype = config.dtype
@@ -74,7 +74,7 @@ class AutoEncoder(nn.Module):
         x = self.activation(x)
         x = x.reshape(-1)
         z = self.Dense_encoder.forward(x)
-        z = self.activation(z)
+        # z = self.activation(z)
         x_ = self.Dense_decoder.forward(z)
         x_ = self.activation(x_)
         x_ = x_.reshape((self.input_dims[0], -1))
@@ -85,7 +85,7 @@ class AutoEncoder(nn.Module):
         inv_idx = torch.arange(x_.size(1)-1, -1, -1).long()
         inv_h_f = x_.index_select(1, inv_idx)
         x_, _ = self.LSTM_decoder.forward(inv_h_f)
-        x_ = self.activation(x_)
+        # x_ = self.activation(x_)
         return x_, z
 
     def __call__(self, x):
