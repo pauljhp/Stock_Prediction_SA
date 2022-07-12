@@ -3,9 +3,11 @@
 if [[ "$OSTYPE" == "msys" ]]; then
     echo "windows OS detected"
     conda env create -f ./environment_win.yml
+    conda activate sent_env
 elif [[ "$OSTYPE" == "linux-gnu" ]]; then
     echo "linux OS deteced"
     conda env create -f ./environment.yml
+    source activate sent_env
 fi
 
 # --or--
