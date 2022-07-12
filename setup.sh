@@ -3,13 +3,17 @@
 if [[ "$OSTYPE" == "msys" ]]; then
     echo "windows OS detected"
     conda env create -f ./environment_win.yml
+    conda init --all
+    eval "$(conda shell.bash hook)"
+    conda activate sent_env
 elif [[ "$OSTYPE" == "linux-gnu" ]]; then
     echo "linux OS deteced"
     conda env create -f ./environment.yml
+    conda init bash
+    source activate sent_env
 fi
 
-conda init "~$SHELL"
-conda activate sent_env
+
 
 # --or--
 # conda create --name sent_env --file requirements.txt
