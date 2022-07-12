@@ -8,7 +8,7 @@ elif [[ "$OSTYPE" == "linux-gnu" ]]; then
     conda env create -f ./environment.yml
 fi
 
-conda init $SHELL
+conda init "~$SHELL"
 conda activate sent_env
 
 # --or--
