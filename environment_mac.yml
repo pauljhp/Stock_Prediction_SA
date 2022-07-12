@@ -1,18 +1,19 @@
 name: sent_env
 channels:
   - defaults
+  - pytorch-nightly
 dependencies:
-  - python=3.9
   - pytorch
   - scikit-learn
-  - pandas
   - numpy
   - ipykernel
+  - pandas
+  - pip
   - jupyterlab
   - jupyter
+  - python=3.9
   - tensorboard
-  - pip
   - matplotlib
   - pip:
     - gdown
-prefix: C:\users\p.peng\anaconda3\envs\sent_env
+prefix: /opt/miniconda3/envs/sent_env

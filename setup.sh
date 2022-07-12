@@ -11,13 +11,21 @@ elif [[ "$OSTYPE" == "linux-gnu" ]]; then
     conda env create -f ./environment.yml
     conda init bash
     source activate sent_env
+elif [[ "$OSTYPE" == "darwin"* ]]; then
+    echo "mac OS detected"
+    conda env create -f ./environment.yml
+    conda init bash
+    source activate sent_env
+else
+    echo "unknown OS detected"
+    exit 1
 fi
 
 
-
+######################
 # --or--
 # conda create --name sent_env --file requirements.txt
-
+#################
 
 mkdir -p ./data
 

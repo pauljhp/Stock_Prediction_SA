@@ -17,8 +17,8 @@ else:
     from ..utils import Config, padding
 
 
-DEFAULT_CONFIG = Config(input_dims=(88, 100), hidden_dims=(5, ),
-    activation=torch.tanh, dtype=torch.float64,)
+DEFAULT_CONFIG = Config(input_dims=(40, 88), hidden_dims=(5, ),
+    activation=nn.Tanh(), dtype=torch.float64,)
 
 
 class AutoEncoder(nn.Module):
@@ -43,7 +43,7 @@ class AutoEncoder(nn.Module):
         assert self.lstm_hidden // 2 == self.lstm_hidden / 2, "lstm_hidden must be even."
 
         if config.get('activation', 'object'): activation = config.activation
-        else: activation = torch.tanh
+        else: activation = nn.Tanh()
         self.activation = activation
 
         if config.get('dtype', 'object'): dtype = config.dtype
@@ -54,7 +54,8 @@ class AutoEncoder(nn.Module):
         else: pad = -1.
         self.pad = pad
 
-        self.LSTM_encoder = nn.LSTM(input_dims[-1], lstm_hidden, batch_first=config.get('batch_first', False), dtype=self.dtype)
+        self.LSTM_encoder = nn.LSTM(input_dims[-1], lstm_hidden, batch_first=config.get(
+            'batch_first', returntype='bool', default=True), dtype=self.dtype)
         self.Conv1D_encoder1 = nn.Conv1d(input_dims[0], input_dims[0], stride=1,
             padding=1, kernel_size=3, dtype=self.dtype)
         self.Conv1D_encoder2 = nn.Conv1d(input_dims[0], input_dims[0], stride=1,
@@ -76,11 +77,16 @@ class AutoEncoder(nn.Module):
             padding=1, kernel_size=3, dtype=self.dtype)
         self.LSTM_decoder = nn.LSTM(lstm_hidden, input_dims[-1], batch_first=False, dtype=self.dtype)
     
-    def forward(self, x: torch.tensor) -> Tuple[torch.tensor, torch.tensor]:
-        if x.shape[-1] < self.input_dims[-1]:
-            x = padding(x, direction='left', pad_value=self.pad, repeat=self.input_dims[0] - x.shape[1])
-        assert x.T.detach().numpy().shape == self.input_dims, f"x is of the wrong shape! Expected {self.input_dims}, got {x.T.shape}."
-        x, _ = self.LSTM_encoder.forward(x.T)
+    def forward(self, x: torch.tensor, batched: bool=True) -> Tuple[torch.tensor, torch.tensor]:
+        if batched:
+            x = x.permute(0, 2, 1)
+            assert x.detach().numpy().shape[1:] == self.input_dims, f"x is of the wrong shape! Expected {self.input_dims}, got {x.T.shape[1:]}."
+            x, _ = self.LSTM_encoder.forward(x)
+        else:
+            if x.shape[-1] < self.input_dims[-1]:
+                x = padding(x, direction='left', pad_value=self.pad, repeat=self.input_dims[0] - x.shape[-1])
+            assert x.T.detach().numpy().shape == self.input_dims, f"x is of the wrong shape! Expected {self.input_dims}, got {x.T.shape}."
+            x, _ = self.LSTM_encoder.forward(x.T)
         x = self.activation(x)
         x = self.Conv1D_encoder1.forward(x)
         x = self.activation(x)
@@ -89,24 +95,35 @@ class AutoEncoder(nn.Module):
         x = self.Conv1D_encoder3.forward(x)
         x = self.activation(x)
         x, ind = self.MaxPool1D_encoder.forward(x)
-        x = self.activation(x)
-        x = x.reshape(-1)
+        # x = self.activation(x)
+        if batched:
+            x = x.reshape((x.shape[0], -1))
+        else:
+            x = x.reshape(-1)
         z = self.Dense_encoder.forward(x)
         # z = self.activation(z)
         x_ = self.Dense_decoder.forward(z)
         x_ = self.activation(x_)
-        x_ = x_.reshape((self.input_dims[0], -1))
+        if batched:
+            x_ = x_.reshape((tuple(ind.shape)))
+        else:
+            x_ = x_.reshape((self.input_dims[0], -1))
         x_ = self.MaxUnpool1D_decoder.forward(x_, indices=ind)
-        x_ = self.activation(x_)
+        # x_ = self.activation(x_)
         x_ = self.DeConv1D_decoder1.forward(x_)
+        x_ = self.activation(x_)
         x_ = self.DeConv1D_decoder2.forward(x_)
+        x_ = self.activation(x_)
         x_ = self.DeConv1D_decoder3.forward(x_)
         x_ = self.activation(x_)
         inv_idx = torch.arange(x_.size(1)-1, -1, -1).long()
         inv_h_f = x_.index_select(1, inv_idx)
         x_, _ = self.LSTM_decoder.forward(inv_h_f)
         # x_ = self.activation(x_)
-        return x_.T, z
+        if batched:
+            return x_.permute(0, 2, 1), z
+        else:
+            return x_.T, z
 
-    def __call__(self, x):
-        return self.forward(x)
+    def __call__(self, x, batched: bool=True):
+        return self.forward(x, batched=batched)

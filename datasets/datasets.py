@@ -13,9 +13,9 @@ import logging
 
 CWD = os.getcwd()
 if CWD.split(r"/")[-1].split("\\")[-1] == 'Stock_Prediction_SA':
-    from utils import iter_by_chunk, Config
+    from utils import iter_by_chunk, Config, padding
 else:
-    from ..utils import iter_by_chunk, Config
+    from ..utils import iter_by_chunk, Config, padding
 
 LOGPATH = './.log/'
 LOGFILE = os.path.join(LOGPATH, 'log.log')
@@ -197,3 +197,19 @@ class BaseDataset(Dataset):
 
     def __iter__(self):
         return self.data.__iter__()
+    
+    def iter_by_batch(self, batch_size: int=128, padded_size: int=50):
+        """iterate by batch. yields a generator (x1_b, x2_b, y_b)
+        :param batch_size: batch size
+        :param padded_size: x2 is of variable length, this is the padded length
+        :returns: generator of (x1_b, x2_b, y_b). Dimensions:
+            x1_b - (N, n_features, look_back)
+            x2_b - (N, n_features, padded_look_back_years)
+            y_b - (N, look_forward_return)
+        """
+        for batch in iter_by_chunk(self.data.__iter__(), batch_size):
+            x1 = torch.stack([x[0] for x in batch])
+            x2 = torch.stack(
+                [padding(x[1], "left", repeat=padded_size-x[1].shape[1]) for x in batch])
+            y = torch.stack([x[2] for x in batch])
+            yield (x1, x2, y)

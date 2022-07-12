@@ -9,6 +9,10 @@ dependencies:
   - numpy
   - ipykernel
   - pip
+  - jupyterlab
+  - jupyter
+  - tensorboard
+  - matplotlib
   - pip:
     - gdown
 prefix: /home/anaconda3/envs/sent_env
