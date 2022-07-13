@@ -86,7 +86,7 @@ class AutoEncoder(nn.Module):
             if x.shape[-1] < self.input_dims[-1]:
                 x = padding(x, direction='left', pad_value=self.pad, repeat=self.input_dims[0] - x.shape[-1])
             assert x.T.detach().numpy().shape == self.input_dims, f"x is of the wrong shape! Expected {self.input_dims}, got {x.T.shape}."
-            x, _ = self.LSTM_encoder.forward(x.T)
+            x, _ = self.LSTM_encoder.forward(x.T.reshape(1, *tuple(x.T.shape)))
         x = self.activation(x)
         x = self.Conv1D_encoder1.forward(x)
         x = self.activation(x)
@@ -96,18 +96,18 @@ class AutoEncoder(nn.Module):
         x = self.activation(x)
         x, ind = self.MaxPool1D_encoder.forward(x)
         # x = self.activation(x)
-        if batched:
-            x = x.reshape((x.shape[0], -1))
-        else:
-            x = x.reshape(-1)
+        # if batched:
+        x = x.reshape((x.shape[0], -1))
+        # else:
+            # x = x.reshape(-1)
         z = self.Dense_encoder.forward(x)
         # z = self.activation(z)
         x_ = self.Dense_decoder.forward(z)
         x_ = self.activation(x_)
-        if batched:
-            x_ = x_.reshape((tuple(ind.shape)))
-        else:
-            x_ = x_.reshape((self.input_dims[0], -1))
+        # if batched:
+        x_ = x_.reshape((tuple(ind.shape)))
+        # else:
+            # x_ = x_.reshape((self.input_dims[0], -1))
         x_ = self.MaxUnpool1D_decoder.forward(x_, indices=ind)
         # x_ = self.activation(x_)
         x_ = self.DeConv1D_decoder1.forward(x_)
@@ -123,7 +123,7 @@ class AutoEncoder(nn.Module):
         if batched:
             return x_.permute(0, 2, 1), z
         else:
-            return x_.T, z
+            return x_.reshape(*tuple(x_.shape)[1:]).T, z
 
     def __call__(self, x, batched: bool=True):
         return self.forward(x, batched=batched)
